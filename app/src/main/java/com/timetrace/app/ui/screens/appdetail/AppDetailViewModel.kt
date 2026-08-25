@@ -1,19 +1,19 @@
 package com.timetrace.app.ui.screens.appdetail
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.timetrace.app.data.repository.UsageRepository
 import com.timetrace.app.domain.model.SessionStats
+import com.timetrace.app.util.safeLaunch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 data class AppDetailUiState(
     val isLoading: Boolean = true,
     val appName: String = "",
-    val stats: SessionStats? = null
+    val stats: SessionStats? = null,
+    val error: Boolean = false
 )
 
 class AppDetailViewModel(
@@ -25,9 +25,11 @@ class AppDetailViewModel(
     val uiState: StateFlow<AppDetailUiState> = _uiState.asStateFlow()
 
     fun load(date: LocalDate) {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
+        _uiState.value = _uiState.value.copy(isLoading = true, error = false)
 
+        safeLaunch(onError = {
+            _uiState.value = _uiState.value.copy(isLoading = false, error = true)
+        }) {
             val sessions = repository.getSessionsForAppOnDay(packageName, date)
             val appName = repository.resolveAppLabel(packageName) ?: packageName
             val total = sessions.sumOf { it.durationMillis }

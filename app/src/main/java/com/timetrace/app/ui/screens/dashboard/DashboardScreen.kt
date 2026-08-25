@@ -37,6 +37,7 @@ fun DashboardScreen(viewModel: DashboardViewModel) {
 
     when {
         uiState.isLoading -> LoadingState()
+        uiState.error -> com.timetrace.app.ui.components.ErrorState(onRetry = viewModel::refresh)
         uiState.usageAccessState != UsageAccessState.GRANTED -> UsageAccessRequiredState(
             onGrantClick = { PermissionUtils.openUsageAccessSettings(context) }
         )

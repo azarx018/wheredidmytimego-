@@ -34,13 +34,9 @@
             </intent-filter>
         </activity>
 
-        <!-- Registered manually (not via Hilt/WorkManager auto-init extras)
-             to avoid pulling in the androidx.startup initializer dependency. -->
-        <provider
-            android:name="androidx.startup.InitializationProvider"
-            android:authorities="${applicationId}.androidx-startup"
-            android:exported="false"
-            tools:node="merge" />
+        <!-- WorkManager's own manifest (from work-runtime-ktx) registers its
+             androidx.startup initializer automatically via manifest merge -
+             no manual provider declaration needed here. -->
 
     </application>
 

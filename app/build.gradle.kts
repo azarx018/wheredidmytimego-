@@ -72,6 +72,13 @@ android {
 kotlin {
     compilerOptions {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        // SegmentedButton/SingleChoiceSegmentedButtonRow and the DatePicker
+        // APIs are still marked @ExperimentalMaterial3Api as of this Compose
+        // BOM. Opting in once here (rather than scattering @OptIn across
+        // every screen file that uses them) is a deliberate, documented
+        // trade-off: these are stable-in-practice, widely used APIs, not
+        // early-preview features we're unsure about.
+        freeCompilerArgs.add("-opt-in=androidx.compose.material3.ExperimentalMaterial3Api")
     }
 }
 

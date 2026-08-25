@@ -13,6 +13,9 @@ interface GoalDao {
     @Query("SELECT * FROM goal WHERE enabled = 1")
     fun observeEnabled(): Flow<List<GoalEntity>>
 
+    @Query("SELECT * FROM goal")
+    suspend fun getAll(): List<GoalEntity>
+
     @Insert
     suspend fun insert(goal: GoalEntity): Long
 
@@ -21,6 +24,9 @@ interface GoalDao {
 
     @Query("DELETE FROM goal WHERE id = :id")
     suspend fun delete(id: Long)
+
+    @Query("DELETE FROM goal")
+    suspend fun deleteAll()
 }
 
 @Dao
@@ -36,4 +42,7 @@ interface CodingSessionDao {
 
     @Query("SELECT * FROM coding_session WHERE startTimeMillis >= :sinceMillis ORDER BY startTimeMillis DESC")
     fun observeSince(sinceMillis: Long): Flow<List<CodingSessionEntity>>
+
+    @Query("DELETE FROM coding_session")
+    suspend fun deleteAll()
 }

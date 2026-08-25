@@ -53,6 +53,8 @@ fun TimelineScreen(
                 verticalArrangement = Arrangement.Center
             ) { CircularProgressIndicator() }
 
+            uiState.error -> com.timetrace.app.ui.components.ErrorState(onRetry = { viewModel.refresh() })
+
             uiState.usageAccessState != UsageAccessState.GRANTED -> CenteredMessage(
                 "Grant Usage Access from Settings to see your timeline."
             )

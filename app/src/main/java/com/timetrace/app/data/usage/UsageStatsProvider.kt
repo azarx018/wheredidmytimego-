@@ -50,41 +50,50 @@ class UsageStatsProvider(context: Context) {
         withContext(Dispatchers.Default) {
             if (usageAccessState() != UsageAccessState.GRANTED) return@withContext emptyList()
 
-            val events = usageStatsManager.queryEvents(startMillis, endMillis)
-            val openSessionStart = HashMap<String, Long>()
-            val sessions = mutableListOf<UsageSession>()
-            val event = UsageEvents.Event()
+            try {
+                val events = usageStatsManager.queryEvents(startMillis, endMillis)
+                val openSessionStart = HashMap<String, Long>()
+                val sessions = mutableListOf<UsageSession>()
+                val event = UsageEvents.Event()
 
-            while (events.hasNextEvent()) {
-                events.getNextEvent(event)
-                val pkg = event.packageName ?: continue
+                while (events.hasNextEvent()) {
+                    events.getNextEvent(event)
+                    val pkg = event.packageName ?: continue
 
-                when (event.eventType) {
-                    UsageEvents.Event.MOVE_TO_FOREGROUND,
-                    UsageEvents.Event.ACTIVITY_RESUMED -> {
-                        openSessionStart.putIfAbsent(pkg, event.timeStamp)
-                    }
+                    // Note: ACTIVITY_RESUMED/ACTIVITY_PAUSED are defined by the
+                    // platform as aliases of MOVE_TO_FOREGROUND/MOVE_TO_BACKGROUND
+                    // (same int values), so only the latter need matching here.
+                    when (event.eventType) {
+                        UsageEvents.Event.MOVE_TO_FOREGROUND -> {
+                            openSessionStart.putIfAbsent(pkg, event.timeStamp)
+                        }
 
-                    UsageEvents.Event.MOVE_TO_BACKGROUND,
-                    UsageEvents.Event.ACTIVITY_PAUSED -> {
-                        val start = openSessionStart.remove(pkg)
-                        if (start != null && event.timeStamp > start) {
-                            sessions += UsageSession(pkg, start, event.timeStamp)
+                        UsageEvents.Event.MOVE_TO_BACKGROUND -> {
+                            val start = openSessionStart.remove(pkg)
+                            if (start != null && event.timeStamp > start) {
+                                sessions += UsageSession(pkg, start, event.timeStamp)
+                            }
                         }
                     }
                 }
-            }
 
-            // Any app still "open" at the end of the window (e.g. currently in
-            // foreground) counts up to endMillis rather than being dropped.
-            for ((pkg, start) in openSessionStart) {
-                if (endMillis > start) {
-                    sessions += UsageSession(pkg, start, endMillis)
+                // Any app still "open" at the end of the window (e.g. currently in
+                // foreground) counts up to endMillis rather than being dropped.
+                for ((pkg, start) in openSessionStart) {
+                    if (endMillis > start) {
+                        sessions += UsageSession(pkg, start, endMillis)
+                    }
                 }
-            }
 
-            sessions
-                .filter { it.durationMillis > 0 }
-                .sortedBy { it.startTimeMillis }
+                sessions
+                    .filter { it.durationMillis > 0 }
+                    .sortedBy { it.startTimeMillis }
+            } catch (e: Exception) {
+                // A flaky system_server, a malformed event, or a permission that
+                // was revoked mid-query can all surface here. Per brief section
+                // 20 ("do not crash"), an empty result is the safe fallback -
+                // callers already handle "no data" as a normal empty state.
+                emptyList()
+            }
         }
 }

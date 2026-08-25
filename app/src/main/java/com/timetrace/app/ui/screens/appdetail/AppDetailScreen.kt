@@ -43,6 +43,11 @@ fun AppDetailScreen(viewModel: AppDetailViewModel, date: LocalDate) {
         return
     }
 
+    if (uiState.error) {
+        com.timetrace.app.ui.components.ErrorState(onRetry = { viewModel.load(date) })
+        return
+    }
+
     val stats = uiState.stats ?: return
 
     LazyColumn(

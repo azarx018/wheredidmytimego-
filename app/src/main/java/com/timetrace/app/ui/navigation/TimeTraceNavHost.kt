@@ -24,10 +24,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.timetrace.app.data.local.SettingsDataStore
 import com.timetrace.app.data.repository.UsageRepository
 import com.timetrace.app.domain.model.UsageAccessState
 import com.timetrace.app.ui.screens.appdetail.AppDetailScreen
 import com.timetrace.app.ui.screens.apps.AppsScreen
+import com.timetrace.app.ui.screens.categories.CategoriesScreen
 import com.timetrace.app.ui.screens.dashboard.DashboardScreen
 import com.timetrace.app.ui.screens.dashboard.DashboardViewModel
 import com.timetrace.app.ui.screens.onboarding.OnboardingScreen
@@ -37,7 +39,7 @@ import com.timetrace.app.ui.screens.timeline.TimelineScreen
 import com.timetrace.app.util.PermissionUtils
 
 @Composable
-fun TimeTraceNavHost(usageRepository: UsageRepository) {
+fun TimeTraceNavHost(usageRepository: UsageRepository, settingsDataStore: SettingsDataStore) {
     val context = LocalContext.current
 
     // Re-checked whenever this composable recomposes after returning from
@@ -104,8 +106,69 @@ fun TimeTraceNavHost(usageRepository: UsageRepository) {
                     }
                 )
             }
-            composable(Destination.Statistics.route) { StatisticsScreen() }
-            composable(Destination.Settings.route) { SettingsScreen() }
+            composable(Destination.Statistics.route) {
+                val viewModel: com.timetrace.app.ui.screens.statistics.StatisticsViewModel = viewModel(
+                    factory = SimpleViewModelFactory {
+                        com.timetrace.app.ui.screens.statistics.StatisticsViewModel(usageRepository)
+                    }
+                )
+                StatisticsScreen(viewModel)
+            }
+            composable(Destination.Settings.route) {
+                val viewModel: com.timetrace.app.ui.screens.settings.SettingsViewModel = viewModel(
+                    factory = SimpleViewModelFactory {
+                        com.timetrace.app.ui.screens.settings.SettingsViewModel(usageRepository, settingsDataStore)
+                    }
+                )
+                SettingsScreen(
+                    viewModel = viewModel,
+                    onManageCategories = { navController.navigate(Destination.Categories.route) },
+                    onGoals = { navController.navigate(Destination.Goals.route) },
+                    onCodingSession = { navController.navigate(Destination.Coding.route) },
+                    onCodingApps = { navController.navigate(Destination.CodingApps.route) },
+                    onReplay = { navController.navigate(Destination.Replay.route) }
+                )
+            }
+            composable(Destination.Categories.route) {
+                val viewModel: com.timetrace.app.ui.screens.categories.CategoriesViewModel = viewModel(
+                    factory = SimpleViewModelFactory {
+                        com.timetrace.app.ui.screens.categories.CategoriesViewModel(usageRepository)
+                    }
+                )
+                CategoriesScreen(viewModel)
+            }
+            composable(Destination.Goals.route) {
+                val viewModel: com.timetrace.app.ui.screens.goals.GoalsViewModel = viewModel(
+                    factory = SimpleViewModelFactory {
+                        com.timetrace.app.ui.screens.goals.GoalsViewModel(usageRepository)
+                    }
+                )
+                com.timetrace.app.ui.screens.goals.GoalsScreen(viewModel)
+            }
+            composable(Destination.Coding.route) {
+                val viewModel: com.timetrace.app.ui.screens.coding.CodingViewModel = viewModel(
+                    factory = SimpleViewModelFactory {
+                        com.timetrace.app.ui.screens.coding.CodingViewModel(usageRepository)
+                    }
+                )
+                com.timetrace.app.ui.screens.coding.CodingScreen(viewModel)
+            }
+            composable(Destination.CodingApps.route) {
+                val viewModel: com.timetrace.app.ui.screens.coding.CodingAppsViewModel = viewModel(
+                    factory = SimpleViewModelFactory {
+                        com.timetrace.app.ui.screens.coding.CodingAppsViewModel(usageRepository)
+                    }
+                )
+                com.timetrace.app.ui.screens.coding.CodingAppsScreen(viewModel)
+            }
+            composable(Destination.Replay.route) {
+                val viewModel: com.timetrace.app.ui.screens.replay.ReplayViewModel = viewModel(
+                    factory = SimpleViewModelFactory {
+                        com.timetrace.app.ui.screens.replay.ReplayViewModel(usageRepository)
+                    }
+                )
+                com.timetrace.app.ui.screens.replay.ReplayScreen(viewModel)
+            }
             composable(Destination.AppDetail.route) { backStackEntry ->
                 val packageName = backStackEntry.arguments?.getString("packageName").orEmpty()
                 val dateEpochDay = backStackEntry.arguments?.getString("dateEpochDay")
