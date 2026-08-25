@@ -1,0 +1,15 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Simple ring-with-notch glyph standing in for a real brand mark. -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#7C4DFF"
+        android:strokeWidth="8"
+        android:pathData="M54,30 a24,24 0 1,1 -0.1,0" />
+    <path
+        android:fillColor="#7C4DFF"
+        android:pathData="M54,34 L54,54 L68,60 L64,68 L46,58 L46,34 Z" />
+</vector>
