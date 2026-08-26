@@ -1,5 +1,7 @@
 package com.timetrace.app.ui.screens.goals
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -149,8 +151,13 @@ private fun GoalRow(progress: GoalProgress, onDelete: () -> Unit) {
         val fraction = if (progress.goal.targetDurationMillis > 0) {
             progress.currentDurationMillis.toFloat() / progress.goal.targetDurationMillis.toFloat()
         } else 0f
+        val animatedFraction by animateFloatAsState(
+            targetValue = fraction.coerceIn(0f, 1f),
+            animationSpec = tween(500),
+            label = "goal_progress"
+        )
         LinearProgressIndicator(
-            progress = { fraction.coerceIn(0f, 1f) },
+            progress = { animatedFraction },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(6.dp)

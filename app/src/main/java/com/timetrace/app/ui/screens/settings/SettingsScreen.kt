@@ -57,7 +57,21 @@ fun SettingsScreen(
         ActivityResultContracts.RequestPermission()
     ) { /* result ignored - DailySummaryWorker checks the actual permission before posting */ }
 
+    // Storage Access Framework: lets the user pick exactly where the export
+    // file goes (Downloads, Drive, etc.) without TimeTrace needing broad
+    // storage permissions.
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri -> if (uri != null) viewModel.exportData(uri) }
+
     LaunchedEffect(Unit) { viewModel.refreshUsageAccess() }
+
+    LaunchedEffect(uiState.exportState) {
+        if (uiState.exportState == ExportState.SUCCESS || uiState.exportState == ExportState.FAILED) {
+            kotlinx.coroutines.delay(3000)
+            viewModel.clearExportStatus()
+        }
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -151,6 +165,36 @@ fun SettingsScreen(
         }
 
         item { SectionHeader("Data", topPadding = 28.dp) }
+        item {
+            SettingsRow(
+                title = "Export data",
+                subtitle = "Save your categories, goals, and a 30-day usage summary as JSON",
+                onClick = {
+                    exportLauncher.launch("timetrace-export-${java.time.LocalDate.now()}.json")
+                }
+            )
+            when (uiState.exportState) {
+                ExportState.EXPORTING -> Text(
+                    "Exporting\u2026",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+                ExportState.SUCCESS -> Text(
+                    "Export saved.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+                ExportState.FAILED -> Text(
+                    "Export failed - try again.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+                ExportState.IDLE -> {}
+            }
+        }
         item {
             SettingsRow(
                 title = "Clear local data",

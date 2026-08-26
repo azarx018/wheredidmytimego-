@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
@@ -78,16 +79,18 @@ fun AppsScreen(
                 contentPadding = PaddingValues(vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
-                items(uiState.apps, key = { it.packageName }) { app ->
-                    AppListItem(
-                        packageName = app.packageName,
-                        appName = app.appName,
-                        durationMillis = app.totalDurationMillis,
-                        fractionOfTotal = if (uiState.totalDurationMillis > 0) {
-                            app.totalDurationMillis.toFloat() / uiState.totalDurationMillis.toFloat()
-                        } else 0f,
-                        onClick = { onAppClick(app.packageName, uiState.selectedDate) }
-                    )
+                itemsIndexed(uiState.apps, key = { _, app -> app.packageName }) { index, app ->
+                    com.timetrace.app.ui.components.StaggeredAppear(index = index) {
+                        AppListItem(
+                            packageName = app.packageName,
+                            appName = app.appName,
+                            durationMillis = app.totalDurationMillis,
+                            fractionOfTotal = if (uiState.totalDurationMillis > 0) {
+                                app.totalDurationMillis.toFloat() / uiState.totalDurationMillis.toFloat()
+                            } else 0f,
+                            onClick = { onAppClick(app.packageName, uiState.selectedDate) }
+                        )
+                    }
                 }
             }
         }

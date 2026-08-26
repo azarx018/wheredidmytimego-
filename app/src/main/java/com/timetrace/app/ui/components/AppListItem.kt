@@ -1,5 +1,7 @@
 package com.timetrace.app.ui.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -30,6 +32,12 @@ fun AppListItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val animatedFraction by animateFloatAsState(
+        targetValue = fractionOfTotal.coerceIn(0f, 1f),
+        animationSpec = tween(500),
+        label = "app_list_item_progress"
+    )
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -53,7 +61,7 @@ fun AppListItem(
             }
             Spacer(Modifier.height(6.dp))
             LinearProgressIndicator(
-                progress = { fractionOfTotal.coerceIn(0f, 1f) },
+                progress = { animatedFraction },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(4.dp)

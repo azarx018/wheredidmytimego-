@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -139,8 +140,10 @@ private fun DailyStats(uiState: StatisticsUiState) {
                     modifier = Modifier.padding(top = 20.dp, bottom = 4.dp)
                 )
             }
-            items(uiState.categories, key = { it.categoryName }) { category ->
-                CategoryRow(category)
+            itemsIndexed(uiState.categories, key = { _, item -> item.categoryName }) { index, category ->
+                com.timetrace.app.ui.components.StaggeredAppear(index = index) {
+                    CategoryRow(category)
+                }
             }
         }
     }
@@ -184,33 +187,37 @@ private fun WeeklyStats(uiState: StatisticsUiState) {
 
 @Composable
 private fun CategoryRow(category: CategoryUsageSummary) {
+    val accentColor = runCatching { Color(android.graphics.Color.parseColor(category.colorHex)) }
+        .getOrDefault(MaterialTheme.colorScheme.onSurfaceVariant)
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = 5.dp)
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape(14.dp))
+            .background(accentColor.copy(alpha = 0.14f))
+            .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            val dotColor = runCatching { Color(android.graphics.Color.parseColor(category.colorHex)) }
-                .getOrDefault(MaterialTheme.colorScheme.onSurfaceVariant)
             androidx.compose.foundation.layout.Box(
                 modifier = Modifier
-                    .width(12.dp)
-                    .height(12.dp)
+                    .width(10.dp)
+                    .height(10.dp)
                     .clip(CircleShape)
-                    .background(dotColor)
+                    .background(accentColor)
             )
             Text(
                 category.categoryName,
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(start = 10.dp)
+                modifier = Modifier.padding(start = 12.dp)
             )
         }
         Text(
             category.totalDurationMillis.formatDuration(),
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = accentColor
         )
     }
 }

@@ -68,13 +68,30 @@ fun TimeTraceNavHost(usageRepository: UsageRepository, settingsDataStore: Settin
         NavHost(
             navController = navController,
             startDestination = Destination.Dashboard.route,
-            modifier = androidx.compose.ui.Modifier.padding(innerPadding)
+            modifier = androidx.compose.ui.Modifier.padding(innerPadding),
+            enterTransition = {
+                androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(200)) +
+                    androidx.compose.animation.slideInHorizontally(androidx.compose.animation.core.tween(200)) { it / 12 }
+            },
+            exitTransition = {
+                androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(150))
+            },
+            popEnterTransition = {
+                androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(200))
+            },
+            popExitTransition = {
+                androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(150)) +
+                    androidx.compose.animation.slideOutHorizontally(androidx.compose.animation.core.tween(150)) { it / 12 }
+            }
         ) {
             composable(Destination.Dashboard.route) {
                 val viewModel: DashboardViewModel = viewModel(
                     factory = SimpleViewModelFactory { DashboardViewModel(usageRepository) }
                 )
-                DashboardScreen(viewModel)
+                DashboardScreen(
+                    viewModel = viewModel,
+                    onCodingSessionClick = { navController.navigate(Destination.Coding.route) }
+                )
             }
             composable(Destination.Apps.route) {
                 val viewModel: com.timetrace.app.ui.screens.apps.AppsViewModel = viewModel(

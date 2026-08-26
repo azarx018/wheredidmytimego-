@@ -23,6 +23,8 @@ import com.timetrace.app.domain.model.UsageSession
 import com.timetrace.app.domain.model.WeeklyUsageOverview
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import org.json.JSONObject
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -271,6 +273,76 @@ class UsageRepository(
                 otherDurationMillis = totalMillis - codingMillis
             )
         }
+
+    /**
+     * Builds a JSON snapshot for the Settings "Export data" action: TimeTrace's own
+     * configuration (categories, goals, coding-app flags) plus an aggregated 30-day
+     * usage history. Deliberately exports daily TOTALS, not raw per-session data - a
+     * portable report the user can keep, without dumping their entire minute-by-minute
+     * activity log into a file that could end up somewhere unintended. Uses org.json
+     * (built into Android) rather than adding a JSON library dependency.
+     */
+    suspend fun buildExportJson(): String = withContext(Dispatchers.Default) {
+        val root = JSONObject()
+        root.put("exportedAtMillis", System.currentTimeMillis())
+
+        val categoriesArray = JSONArray()
+        getAllCategories().forEach { category ->
+            categoriesArray.put(
+                JSONObject()
+                    .put("id", category.id)
+                    .put("name", category.name)
+                    .put("colorHex", category.colorHex)
+            )
+        }
+        root.put("categories", categoriesArray)
+
+        val goalsArray = JSONArray()
+        goalDao.getAll().forEach { goal ->
+            goalsArray.put(
+                JSONObject()
+                    .put("targetType", goal.targetType.name)
+                    .put("targetId", goal.targetId)
+                    .put("targetDurationMillis", goal.targetDurationMillis)
+                    .put("enabled", goal.enabled)
+            )
+        }
+        root.put("goals", goalsArray)
+
+        val codingAppsArray = JSONArray()
+        getCodingAppPackageNames().forEach { codingAppsArray.put(it) }
+        root.put("codingApps", codingAppsArray)
+
+        val dailyArray = JSONArray()
+        val today = LocalDate.now()
+        for (daysAgo in 0..29) {
+            val date = today.minusDays(daysAgo.toLong())
+            val overview = getDailyOverview(date)
+            dailyArray.put(
+                JSONObject()
+                    .put("date", date.toString())
+                    .put("totalDurationMillis", overview.totalDurationMillis)
+                    .put("appCount", overview.appCount)
+            )
+        }
+        root.put("dailyUsageLast30Days", dailyArray)
+
+        root.toString(2)
+    }
+
+    /** Writes [buildExportJson]'s output to a location the user picked via a
+     * CreateDocument (Storage Access Framework) launcher in the UI layer. */
+    suspend fun exportToUri(uri: android.net.Uri): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val json = buildExportJson()
+            context.contentResolver.openOutputStream(uri)?.use { stream ->
+                stream.write(json.toByteArray(Charsets.UTF_8))
+            } ?: return@withContext false
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
 
     /**
      * Resets TimeTrace's own configuration (category assignments, goals, coding session

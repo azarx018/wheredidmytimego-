@@ -1,5 +1,6 @@
 package com.timetrace.app.ui.screens.settings
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.timetrace.app.data.local.SettingsDataStore
@@ -13,10 +14,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
+enum class ExportState { IDLE, EXPORTING, SUCCESS, FAILED }
+
 data class SettingsUiState(
     val usageAccessState: UsageAccessState = UsageAccessState.NOT_GRANTED,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
-    val notificationsEnabled: Boolean = true
+    val notificationsEnabled: Boolean = true,
+    val exportState: ExportState = ExportState.IDLE
 )
 
 class SettingsViewModel(
@@ -60,5 +64,23 @@ class SettingsViewModel(
 
     fun clearLocalData() {
         safeLaunch { repository.clearAllLocalData() }
+    }
+
+    /** [uri] comes from a CreateDocument picker result in the screen - the user already
+     * chose where to save, this just writes the export JSON there. */
+    fun exportData(uri: Uri) {
+        _uiState.value = _uiState.value.copy(exportState = ExportState.EXPORTING)
+        safeLaunch(onError = {
+            _uiState.value = _uiState.value.copy(exportState = ExportState.FAILED)
+        }) {
+            val ok = repository.exportToUri(uri)
+            _uiState.value = _uiState.value.copy(
+                exportState = if (ok) ExportState.SUCCESS else ExportState.FAILED
+            )
+        }
+    }
+
+    fun clearExportStatus() {
+        _uiState.value = _uiState.value.copy(exportState = ExportState.IDLE)
     }
 }

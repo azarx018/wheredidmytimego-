@@ -1,5 +1,7 @@
 package com.timetrace.app.ui.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,7 +21,8 @@ import com.timetrace.app.util.formatDuration
 /**
  * One row in an app usage list: name, duration, and a slim progress bar
  * showing this app's share of the total. Deliberately simple - no custom
- * canvas drawing - to keep render cost and code size low.
+ * canvas drawing - to keep render cost and code size low. The bar animates
+ * into place (Toggl-style smoothness) instead of snapping to its value.
  */
 @Composable
 fun AppUsageRow(
@@ -28,6 +31,12 @@ fun AppUsageRow(
     fractionOfTotal: Float,
     modifier: Modifier = Modifier
 ) {
+    val animatedFraction by animateFloatAsState(
+        targetValue = fractionOfTotal.coerceIn(0f, 1f),
+        animationSpec = tween(500),
+        label = "usage_row_progress"
+    )
+
     Column(modifier = modifier.fillMaxWidth().padding(vertical = 8.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -42,7 +51,7 @@ fun AppUsageRow(
         }
         Spacer(Modifier.height(6.dp))
         LinearProgressIndicator(
-            progress = { fractionOfTotal.coerceIn(0f, 1f) },
+            progress = { animatedFraction },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(6.dp)
