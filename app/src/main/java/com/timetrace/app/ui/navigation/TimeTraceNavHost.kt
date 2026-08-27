@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
@@ -212,7 +211,7 @@ private fun TimeTraceBottomBar(navController: androidx.navigation.NavHostControl
         Destination.bottomBarDestinations.forEach { destination ->
             val (icon, label) = when (destination) {
                 Destination.Dashboard -> Icons.Default.Home to "Home"
-                Destination.Apps -> Icons.Default.List to "Apps"
+                Destination.Apps -> Icons.AutoMirrored.Filled.List to "Apps"
                 Destination.Timeline -> Icons.Default.Schedule to "Timeline"
                 Destination.Statistics -> Icons.Default.BarChart to "Stats"
                 Destination.Settings -> Icons.Default.Settings to "Settings"

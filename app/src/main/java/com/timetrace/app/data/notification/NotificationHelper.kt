@@ -1,6 +1,7 @@
 package com.timetrace.app.data.notification
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
@@ -29,7 +30,17 @@ object NotificationHelper {
         }
     }
 
-    /** Neutral, factual phrasing per brief section 12 - a report, not a scolding. */
+    /**
+     * Neutral, factual phrasing per brief section 12 - a report, not a scolding.
+     *
+     * @SuppressLint is needed because lint's permission analysis can't trace
+     * through [hasPermission] to know the check already happened - it only
+     * recognizes inline checkSelfPermission calls at the call site. The
+     * try/catch below is the real safety net lint is asking for: if the
+     * permission is revoked in the moment between our check and the actual
+     * call (rare, but possible), this fails silently instead of crashing.
+     */
+    @SuppressLint("MissingPermission")
     fun showDailySummary(context: Context, totalDurationText: String) {
         if (!hasPermission(context)) return
 
@@ -42,7 +53,11 @@ object NotificationHelper {
             .setAutoCancel(true)
             .build()
 
-        NotificationManagerCompat.from(context).notify(DAILY_SUMMARY_NOTIFICATION_ID, notification)
+        try {
+            NotificationManagerCompat.from(context).notify(DAILY_SUMMARY_NOTIFICATION_ID, notification)
+        } catch (e: SecurityException) {
+            // Permission revoked between our check and this call - skip silently.
+        }
     }
 
     private fun hasPermission(context: Context): Boolean =

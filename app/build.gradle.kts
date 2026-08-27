@@ -65,6 +65,12 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+    lint {
+        // Mirrors the compiler's -opt-in flag below for Lint's own separate
+        // UnsafeOptInUsageError check - see app/lint.xml for why both are needed.
+        lintConfig = file("lint.xml")
+    }
 }
 
 // Kotlin compiler options now live in this top-level block rather than

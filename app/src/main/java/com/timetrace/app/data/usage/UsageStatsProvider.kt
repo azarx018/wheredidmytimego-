@@ -28,6 +28,9 @@ class UsageStatsProvider(context: Context) {
     private val appOpsManager =
         appContext.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
 
+    @Suppress("DEPRECATION") // unsafeCheckOpNoThrow has no simpler non-deprecated
+    // equivalent for a plain "is this granted" check without adding an
+    // attribution-tag parameter we have no use for.
     fun usageAccessState(): UsageAccessState {
         val mode = appOpsManager.unsafeCheckOpNoThrow(
             AppOpsManager.OPSTR_GET_USAGE_STATS,
@@ -60,15 +63,15 @@ class UsageStatsProvider(context: Context) {
                     events.getNextEvent(event)
                     val pkg = event.packageName ?: continue
 
-                    // Note: ACTIVITY_RESUMED/ACTIVITY_PAUSED are defined by the
-                    // platform as aliases of MOVE_TO_FOREGROUND/MOVE_TO_BACKGROUND
-                    // (same int values), so only the latter need matching here.
+                    // ACTIVITY_RESUMED/ACTIVITY_PAUSED are the platform's current
+                    // names for what used to be MOVE_TO_FOREGROUND/MOVE_TO_BACKGROUND
+                    // (same underlying values) - the older names are deprecated.
                     when (event.eventType) {
-                        UsageEvents.Event.MOVE_TO_FOREGROUND -> {
+                        UsageEvents.Event.ACTIVITY_RESUMED -> {
                             openSessionStart.putIfAbsent(pkg, event.timeStamp)
                         }
 
-                        UsageEvents.Event.MOVE_TO_BACKGROUND -> {
+                        UsageEvents.Event.ACTIVITY_PAUSED -> {
                             val start = openSessionStart.remove(pkg)
                             if (start != null && event.timeStamp > start) {
                                 sessions += UsageSession(pkg, start, event.timeStamp)
