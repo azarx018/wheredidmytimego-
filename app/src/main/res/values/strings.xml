@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">TimeTrace</string>
+
+    <string name="onboarding_title">Welcome to TimeTrace</string>
+    <string name="onboarding_subtitle">Understand where your digital time goes.</string>
+    <string name="onboarding_body">TimeTrace needs Usage Access to measure how long applications are used.\n\nYour usage data stays on this device.</string>
+    <string name="onboarding_grant_button">GRANT USAGE ACCESS</string>
+
+    <string name="empty_usage_access_title">Usage Access Required</string>
+    <string name="empty_usage_access_body">TimeTrace cannot read app usage yet.\n\nGrant Usage Access to start tracking.</string>
+
+    <string name="empty_no_usage_title">No usage data yet.</string>
+    <string name="empty_no_usage_body">Start using your phone and check back later.</string>
+
+    <string name="nav_home">Home</string>
+    <string name="nav_apps">Apps</string>
+    <string name="nav_timeline">Timeline</string>
+    <string name="nav_stats">Stats</string>
+    <string name="nav_settings">Settings</string>
+</resources>
