@@ -34,7 +34,12 @@ fun WeeklyBarChart(days: List<DayTotal>, modifier: Modifier = Modifier) {
     // Locale.getDefault() isn't observable by Compose - it won't recompose if
     // the device locale changes while this screen is visible. Reading it via
     // LocalConfiguration makes that change trigger recomposition correctly.
-    val locale = ConfigurationCompat.getLocales(LocalConfiguration.current)[0] ?: java.util.Locale.getDefault()
+    // Note: Locale.ROOT (a constant, not a getDefault()/getAdjustedDefault()
+    // call) is used as the fallback specifically because lint's
+    // NonObservableLocale check flags any textual call to those methods
+    // inside a @Composable regardless of how the result is used - so even a
+    // "this should never actually happen" fallback needs to avoid calling them.
+    val locale = ConfigurationCompat.getLocales(LocalConfiguration.current)[0] ?: java.util.Locale.ROOT
 
     Column(modifier = modifier) {
         Canvas(

@@ -92,7 +92,12 @@ fun SettingsScreen(
                     FilterChip(
                         selected = uiState.themeMode == mode,
                         onClick = { viewModel.onThemeModeSelected(mode) },
-                        label = { Text(mode.name.lowercase().replaceFirstChar { it.uppercase() }) }
+                        label = {
+                            Text(
+                                mode.name.lowercase(java.util.Locale.ROOT)
+                                    .replaceFirstChar { it.uppercase(java.util.Locale.ROOT) }
+                            )
+                        }
                     )
                 }
             }
@@ -231,7 +236,7 @@ fun SettingsScreen(
 @Composable
 private fun SectionHeader(title: String, topPadding: Dp = 0.dp) {
     Text(
-        text = title.uppercase(),
+        text = title.uppercase(java.util.Locale.ROOT),
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.primary,
         modifier = Modifier.padding(top = topPadding, bottom = 4.dp)

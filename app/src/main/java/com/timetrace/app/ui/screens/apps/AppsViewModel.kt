@@ -65,6 +65,6 @@ class AppsViewModel(private val repository: UsageRepository) : ViewModel() {
     private fun sortApps(apps: List<AppUsageSummary>, order: AppSortOrder): List<AppUsageSummary> =
         when (order) {
             AppSortOrder.USAGE_TIME -> apps.sortedByDescending { it.totalDurationMillis }
-            AppSortOrder.NAME -> apps.sortedBy { it.appName.lowercase() }
+            AppSortOrder.NAME -> apps.sortedBy { it.appName.lowercase(java.util.Locale.ROOT) }
         }
 }
