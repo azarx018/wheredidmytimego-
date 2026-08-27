@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -24,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.timetrace.app.domain.model.UsageSession
 import com.timetrace.app.ui.components.AppIcon
+import com.timetrace.app.ui.components.StaggeredAppear
 import com.timetrace.app.util.formatClockTime
 import com.timetrace.app.util.formatDuration
 import java.time.LocalDate
@@ -93,7 +95,9 @@ fun AppDetailScreen(viewModel: AppDetailViewModel, date: LocalDate) {
                 modifier = Modifier.padding(bottom = 4.dp)
             )
         }
-        items(stats.sessions, key = { it.startTimeMillis }) { session -> SessionRow(session) }
+        itemsIndexed(stats.sessions, key = { _, session -> session.startTimeMillis }) { index, session ->
+            StaggeredAppear(index = index) { SessionRow(session) }
+        }
 
         item { HorizontalDivider(modifier = Modifier.padding(vertical = 20.dp)) }
 

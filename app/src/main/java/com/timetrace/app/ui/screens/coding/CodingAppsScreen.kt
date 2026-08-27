@@ -1,5 +1,8 @@
 package com.timetrace.app.ui.screens.coding
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -8,7 +11,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -19,8 +23,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.timetrace.app.ui.components.AppIcon
+import com.timetrace.app.ui.components.StaggeredAppear
 
 @Composable
 fun CodingAppsScreen(viewModel: CodingAppsViewModel) {
@@ -63,27 +69,45 @@ fun CodingAppsScreen(viewModel: CodingAppsViewModel) {
             )
         }
 
-        items(uiState.apps, key = { it.packageName }) { app ->
-            val isCoding = app.packageName in uiState.codingPackages
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    AppIcon(packageName = app.packageName, size = 32.dp)
-                    Text(
-                        app.appName,
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(start = 12.dp)
+        itemsIndexed(uiState.apps, key = { _, app -> app.packageName }) { index, app ->
+            StaggeredAppear(index = index) {
+                val isCoding = app.packageName in uiState.codingPackages
+                // Toggl-style: the row itself tints to the "on" color when
+                // active, not just the switch, so scanning a long list for
+                // what's marked as coding is a glance, not a squint.
+                val backgroundColor by animateColorAsState(
+                    targetValue = if (isCoding) {
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                    } else {
+                        androidx.compose.ui.graphics.Color.Transparent
+                    },
+                    animationSpec = tween(250),
+                    label = "coding_app_row_bg"
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(backgroundColor)
+                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        AppIcon(packageName = app.packageName, size = 32.dp)
+                        Text(
+                            app.appName,
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(start = 12.dp)
+                        )
+                    }
+                    Switch(
+                        checked = isCoding,
+                        onCheckedChange = { viewModel.toggle(app.packageName, it) }
                     )
                 }
-                Switch(
-                    checked = isCoding,
-                    onCheckedChange = { viewModel.toggle(app.packageName, it) }
-                )
             }
         }
     }

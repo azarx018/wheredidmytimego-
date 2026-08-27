@@ -1,17 +1,22 @@
 package com.timetrace.app.ui.screens.timeline
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -27,6 +32,7 @@ import com.timetrace.app.domain.model.UsageAccessState
 import com.timetrace.app.domain.model.UsageSession
 import com.timetrace.app.ui.components.AppIcon
 import com.timetrace.app.ui.components.DaySelector
+import com.timetrace.app.ui.components.StaggeredAppear
 import com.timetrace.app.util.formatClockTime
 import com.timetrace.app.util.formatDuration
 import java.time.LocalDate
@@ -62,36 +68,65 @@ fun TimelineScreen(
             uiState.entries.isEmpty() -> CenteredMessage("No activity recorded for this day.")
 
             else -> LazyColumn(contentPadding = PaddingValues(vertical = 12.dp)) {
-                items(uiState.entries, key = { "${it.packageName}-${it.startTimeMillis}" }) { session ->
-                    TimelineRow(
-                        session = session,
-                        appName = uiState.appNames[session.packageName] ?: session.packageName,
-                        onClick = { onEntryClick(session.packageName, uiState.selectedDate) }
-                    )
+                itemsIndexed(
+                    uiState.entries,
+                    key = { _, session -> "${session.packageName}-${session.startTimeMillis}" }
+                ) { index, session ->
+                    StaggeredAppear(index = index) {
+                        TimelineRow(
+                            session = session,
+                            appName = uiState.appNames[session.packageName] ?: session.packageName,
+                            isLast = index == uiState.entries.lastIndex,
+                            onClick = { onEntryClick(session.packageName, uiState.selectedDate) }
+                        )
+                    }
                 }
             }
         }
     }
 }
 
+/** Daylio-style history feed row: a connecting line runs behind each icon, tying
+ * the day's entries together into one visual thread rather than a loose list. */
 @Composable
-private fun TimelineRow(session: UsageSession, appName: String, onClick: () -> Unit) {
+private fun TimelineRow(session: UsageSession, appName: String, isLast: Boolean, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(vertical = 6.dp)
+            .height(IntrinsicSize.Min),
+        verticalAlignment = Alignment.Top
     ) {
         Text(
             text = session.startTimeMillis.formatClockTime(),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.width(56.dp)
+            modifier = Modifier
+                .width(56.dp)
+                .padding(top = 4.dp)
         )
-        AppIcon(packageName = session.packageName, size = 32.dp)
+
+        Box(
+            modifier = Modifier
+                .width(32.dp)
+                .fillMaxHeight()
+        ) {
+            if (!isLast) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 36.dp)
+                        .width(2.dp)
+                        .fillMaxHeight()
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                )
+            }
+            AppIcon(packageName = session.packageName, size = 32.dp)
+        }
+
         Spacer(Modifier.width(14.dp))
-        Column {
+        Column(modifier = Modifier.padding(vertical = 4.dp)) {
             Text(appName, style = MaterialTheme.typography.titleMedium)
             Text(
                 session.durationMillis.formatDuration(),

@@ -46,6 +46,7 @@ fun UsageRingChart(
     )
 
     val strokeWidthDp = 16.dp
+    val fallbackColor = MaterialTheme.colorScheme.primary
 
     Box(modifier = modifier.size(diameter), contentAlignment = Alignment.Center) {
         Canvas(modifier = Modifier.size(diameter)) {
@@ -70,7 +71,7 @@ fun UsageRingChart(
                     val fraction = category.totalDurationMillis.toFloat() / totalDurationMillis.toFloat()
                     val sweep = 360f * fraction * animatedProgress
                     val color = runCatching { Color(android.graphics.Color.parseColor(category.colorHex)) }
-                        .getOrDefault(MaterialTheme.colorScheme.primary)
+                        .getOrDefault(fallbackColor)
                     drawArc(
                         color = color,
                         startAngle = startAngle,

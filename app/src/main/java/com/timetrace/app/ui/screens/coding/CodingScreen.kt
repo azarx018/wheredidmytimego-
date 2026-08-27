@@ -9,11 +9,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -24,6 +25,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.timetrace.app.ui.components.AppIcon
+import com.timetrace.app.ui.components.CodingTimerRing
+import com.timetrace.app.ui.components.StaggeredAppear
 import com.timetrace.app.util.formatDuration
 import com.timetrace.app.util.formatElapsed
 
@@ -61,7 +64,7 @@ fun CodingScreen(viewModel: CodingViewModel) {
         )
 
         if (uiState.activeSession == null) {
-            Spacer(Modifier.height(48.dp))
+            Spacer(Modifier.height(32.dp))
             Text(
                 "No session running",
                 style = MaterialTheme.typography.titleMedium,
@@ -79,14 +82,15 @@ fun CodingScreen(viewModel: CodingViewModel) {
                 textAlign = TextAlign.Center
             )
         } else {
-            Text(
-                uiState.elapsedMillis.formatElapsed(),
-                style = MaterialTheme.typography.displayLarge,
-                modifier = Modifier.padding(vertical = 24.dp)
+            // Toggl-style: a spinning ring around the live timer signals
+            // "actively recording" rather than a plain static number.
+            CodingTimerRing(
+                elapsedText = uiState.elapsedMillis.formatElapsed(),
+                modifier = Modifier.padding(vertical = 20.dp)
             )
-            Button(
+            OutlinedButton(
                 onClick = viewModel::stopSession,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
             ) { Text("STOP SESSION") }
 
             val breakdown = uiState.breakdown
@@ -101,36 +105,38 @@ fun CodingScreen(viewModel: CodingViewModel) {
                         )
                     }
                     val total = (breakdown.codingDurationMillis + breakdown.otherDurationMillis).coerceAtLeast(1)
-                    items(breakdown.apps, key = { it.packageName }) { app ->
-                        val pct = (app.totalDurationMillis * 100 / total)
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 6.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                AppIcon(packageName = app.packageName, size = 24.dp)
-                                Text(
-                                    app.appName,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    modifier = Modifier.padding(start = 8.dp)
-                                )
-                                if (app.packageName in breakdown.codingPackages) {
+                    itemsIndexed(breakdown.apps, key = { _, app -> app.packageName }) { index, app ->
+                        StaggeredAppear(index = index) {
+                            val pct = (app.totalDurationMillis * 100 / total)
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 6.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    AppIcon(packageName = app.packageName, size = 24.dp)
                                     Text(
-                                        " \u2022 coding",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.padding(start = 4.dp)
+                                        app.appName,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        modifier = Modifier.padding(start = 8.dp)
                                     )
+                                    if (app.packageName in breakdown.codingPackages) {
+                                        Text(
+                                            " \u2022 coding",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.padding(start = 4.dp)
+                                        )
+                                    }
                                 }
+                                Text(
+                                    "${app.totalDurationMillis.formatDuration()} \u2022 $pct%",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
-                            Text(
-                                "${app.totalDurationMillis.formatDuration()} \u2022 $pct%",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
                         }
                     }
                     item {
